@@ -51,15 +51,31 @@ module.exports = (compiler, opts) => {
     throw new HotClientError('`options.client` must be defined when setting host to an Object');
   }
 
+  if (typeof options.port === 'number') {
+    options.port = {
+      server: options.port,
+      client: options.port
+    };
+  } else if (!options.port.server) {
+    throw new HotClientError('`options.port.server` must be defined when setting port to an Object');
+  } else if (!options.port.client) {
+    throw new HotClientError('`options.port.client` must be defined when setting host to an Object');
+  }
+
   /* istanbul ignore if */
   if (options.host.client !== options.host.server) {
     log.warn('`options.host.client` does not match `options.host.server`. This can cause unpredictable behavior in the browser.');
   }
 
+  /* istanbul ignore if */
+  if (options.port.client !== options.port.server) {
+    log.warn('`options.port.client` does not match `options.port.server`. This can cause unpredictable behavior in the browser.');
+  }
+
   validateCompiler(compiler);
 
   const { host, port, server } = options;
-  const wssOptions = options.server ? { server } : { host: host.server, port };
+  const wssOptions = options.server ? { server } : { host: host.server, port: port.server };
   const wss = new WebSocket.Server(wssOptions);
   let stats;
 
@@ -86,7 +102,7 @@ module.exports = (compiler, opts) => {
       port: wss._server.address().port // eslint-disable-line no-underscore-dangle
     };
   } else {
-    options.webSocket = { host: host.client, port };
+    options.webSocket = { host: host.client, port: port.client };
   }
 
   modifyCompiler(compiler, options);
